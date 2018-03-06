@@ -7,9 +7,12 @@
 setwd("~/Sites/rstudio/fds2")
 setwd("./data//cryptocurrencyCSV/")
 
-#install.packages("xts")
+# install.packages("xts")
+# install.packages("devtools")
+# library(devtools)
+# install_github("cran/PerformanceAnalytics")
 library(xts)
-library(quantmod)
+library(PerformanceAnalytics)
 
 files <- list.files()
 cryptos_daily_lr <- list()
@@ -30,7 +33,7 @@ for (file in files){
   daily_close <- as.xts(as.numeric(zooObj), order.by = index(zooObj))
   colnames(daily_close) <- "Close"
   
-  #Daily Log-Returns
+  # Daily Log-Returns
   cryptos_daily_close[[crypto]] <- daily_close
   xts_dlr <- diff(log(daily_close$Close))
   colnames(xts_dlr) <- c("Daily Log-Returns")
@@ -53,8 +56,8 @@ for (file in files){
   
   head(monthly_close, n=5)
   
-  xts_mlr <- diff(log(weekly_close$Close))
-  colnames(xts_mlr) <- c("Weekly Log-Returns")
+  xts_mlr <- diff(log(monthly_close$Close))
+  colnames(xts_mlr) <- c("Monthly Log-Returns")
   cryptos_monthly_lr[[crypto]] <- xts_mlr
   
   rm(daily_close, weekly_close, monthly_close, xts_dlr, xts_wlr, xts_mlr, zooObj, crypto)
@@ -62,7 +65,7 @@ for (file in files){
 rm(file, files)
 setwd("./../")
 
-# Section 2 # Log-Returns ###################################
+# Section 2 # Helper Functions ###################################
 
 mergeAll <- function(crypto_xts_list) {
   m1 <- merge(crypto_xts_list$Bitcoin, crypto_xts_list$Dash, join = "left")
@@ -79,6 +82,30 @@ mergeAll <- function(crypto_xts_list) {
   m1
 }
 
+## put histograms on the diagonal
+panel.hist <- function(x)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan")
+}
+
+## put (absolute) correlations on the upper panels,
+## with size proportional to the correlations.
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * (r+0.7))
+}
+
 # Section 3 # Time-Horizons ###################################
 # Daily ####################
 daily_lr <- mergeAll(cryptos_daily_lr)
@@ -86,7 +113,7 @@ periodicity(daily_lr)
 
 # Scatter Plots
 dfc <- as.data.frame(daily_lr)
-pairs(dfc)
+pairs(dfc,diag.panel = panel.hist, upper.panel = panel.cor)
 
 # Time-series Plots
 dfcTS <- ts(dfc, frequency = 365, start = c(2015,06,26))
@@ -100,7 +127,7 @@ periodicity(weekly_lr)
 
 # Scatter Plots
 wfc <- as.data.frame(weekly_lr)
-pairs(wfc)
+pairs(wfc,diag.panel = panel.hist, upper.panel = panel.cor)
 
 # Time-series Plots
 wfcTS <- ts(wfc, frequency = 52, start = c(2015,06,26))
@@ -113,10 +140,10 @@ periodicity(monthly_lr)
 
 # Scatter Plots
 mfc <- as.data.frame(monthly_lr)
-pairs(mfc)
+pairs(mfc,diag.panel = panel.hist, upper.panel = panel.cor)
 
 # Time-series Plots
-mfcTS <- ts(mfc, frequency = 52, start = c(2015,06,26))
+mfcTS <- ts(mfc, frequency = 12, start = c(2015,06,26))
 # Pairs
 plot(mfcTS, main= "Cryptocurrency Monthly Log-Returns")
 
@@ -181,13 +208,13 @@ weekly_cl <- as.data.frame(log(mergeAll(cryptos_weekly_close)))
 monthly_cl <- as.data.frame(log(mergeAll(cryptos_monthly_close)))
 
 setwd("./output/")
-write_csv(daily_cl, "cryptos_daily_log_close.csv")
-write_csv(weekly_cl, "cryptos_weekly_log_close.csv")
-write_csv(monthly_cl, "cryptos_monthly_log_close.csv")
+write.csv(daily_cl, "cryptos_daily_log_close.csv", row.names = TRUE)
+write.csv(weekly_cl, "cryptos_weekly_log_close.csv", row.names = TRUE)
+write.csv(monthly_cl, "cryptos_monthly_log_close.csv", row.names = TRUE)
 
-write_csv(dfc, "cryptos_daily_lr.csv")
-write_csv(wfc, "cryptos_weekly_lr.csv")
-write_csv(mfc, "cryptos_monthly_lr.csv")
+write.csv(dfc, "cryptos_daily_lr.csv", row.names = TRUE)
+write.csv(wfc, "cryptos_weekly_lr.csv", row.names = TRUE)
+write.csv(mfc, "cryptos_monthly_lr.csv", row.names = TRUE)
 setwd("./../")
 
 
