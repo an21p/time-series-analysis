@@ -60,6 +60,7 @@ for (file in files){
   rm(daily_close, weekly_close, monthly_close, xts_dlr, xts_wlr, xts_mlr, zooObj, crypto)
 }
 rm(file, files)
+setwd("./../")
 
 # Section 2 # Log-Returns ###################################
 
@@ -173,8 +174,20 @@ m1_model$BIC
 sarima.for(m_cl_train, n.ahead=test, 1,1,0)
 lines(m_cl)
 
-# Section 4 # ARIMA ###################################
-# install.packages("rugarch")
-library(rugarch)
-?rugarch
+
+# Section 5 # Export ###################################
+daily_cl <- as.data.frame(log(mergeAll(cryptos_daily_close)))
+weekly_cl <- as.data.frame(log(mergeAll(cryptos_weekly_close)))
+monthly_cl <- as.data.frame(log(mergeAll(cryptos_monthly_close)))
+
+setwd("./output/")
+write_csv(daily_cl, "cryptos_daily_log_close.csv")
+write_csv(weekly_cl, "cryptos_weekly_log_close.csv")
+write_csv(monthly_cl, "cryptos_monthly_log_close.csv")
+
+write_csv(dfc, "cryptos_daily_lr.csv")
+write_csv(wfc, "cryptos_weekly_lr.csv")
+write_csv(mfc, "cryptos_monthly_lr.csv")
+setwd("./../")
+
 
