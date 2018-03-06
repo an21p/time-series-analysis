@@ -11,6 +11,8 @@ setwd("./data//cryptocurrencyCSV/")
 # install.packages("devtools")
 # library(devtools)
 # install_github("cran/PerformanceAnalytics")
+# install.packages("astsa")
+library(astsa)
 library(xts)
 library(PerformanceAnalytics)
 
@@ -149,9 +151,6 @@ plot(mfcTS, main= "Cryptocurrency Monthly Log-Returns")
 
 # Section 4 # ARIMA ###################################
 # This section assumes normality
-# 
-# install.packages("astsa")
-library(astsa)
 
 # NEM Daily
 test = 30
