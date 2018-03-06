@@ -2,7 +2,7 @@
 # Financial Data and Statistics
 # Assignment 2
 
-# Section 1 # Importing ###################################
+# Section # Importing ###################################
 
 setwd("~/Sites/rstudio/fds2")
 setwd("./data//cryptocurrencyCSV/")
@@ -12,9 +12,11 @@ setwd("./data//cryptocurrencyCSV/")
 # library(devtools)
 # install_github("cran/PerformanceAnalytics")
 # install.packages("astsa")
-library(astsa)
+# nstall.packages("pracma")
 library(xts)
+library(astsa)
 library(PerformanceAnalytics)
+library(pracma)
 
 files <- list.files()
 cryptos_daily_lr <- list()
@@ -67,7 +69,7 @@ for (file in files){
 rm(file, files)
 setwd("./../")
 
-# Section 2 # Helper Functions ###################################
+# Section # Helper Functions ###################################
 
 mergeAll <- function(crypto_xts_list) {
   m1 <- merge(crypto_xts_list$Bitcoin, crypto_xts_list$Dash, join = "left")
@@ -108,7 +110,7 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor)
   text(0.5, 0.5, txt, cex = cex.cor * (r+0.7))
 }
 
-# Section 3 # Time-Horizons ###################################
+# Section # Time-Horizons ###################################
 # Daily ####################
 daily_lr <- mergeAll(cryptos_daily_lr)
 periodicity(daily_lr)
@@ -149,8 +151,24 @@ mfcTS <- ts(mfc, frequency = 12, start = c(2015,06,26))
 # Pairs
 plot(mfcTS, main= "Cryptocurrency Monthly Log-Returns")
 
-# Section 4 # ARIMA ###################################
+# Section # Export ###################################
+daily_cl <- as.data.frame(log(mergeAll(cryptos_daily_close)))
+weekly_cl <- as.data.frame(log(mergeAll(cryptos_weekly_close)))
+monthly_cl <- as.data.frame(log(mergeAll(cryptos_monthly_close)))
+
+setwd("./output/")
+write.csv(daily_cl, "cryptos_daily_log_close.csv", row.names = TRUE)
+write.csv(weekly_cl, "cryptos_weekly_log_close.csv", row.names = TRUE)
+write.csv(monthly_cl, "cryptos_monthly_log_close.csv", row.names = TRUE)
+
+write.csv(dfc, "cryptos_daily_lr.csv", row.names = TRUE)
+write.csv(wfc, "cryptos_weekly_lr.csv", row.names = TRUE)
+write.csv(mfc, "cryptos_monthly_lr.csv", row.names = TRUE)
+setwd("./../")
+
+# Section # ARIMA ###################################
 # This section assumes normality
+# See 'arimaplus.m' for ARIMA with t-student residuals
 
 # NEM Daily
 test = 30
@@ -200,20 +218,6 @@ m1_model$BIC
 sarima.for(m_cl_train, n.ahead=test, 1,1,0)
 lines(m_cl)
 
-
-# Section 5 # Export ###################################
-daily_cl <- as.data.frame(log(mergeAll(cryptos_daily_close)))
-weekly_cl <- as.data.frame(log(mergeAll(cryptos_weekly_close)))
-monthly_cl <- as.data.frame(log(mergeAll(cryptos_monthly_close)))
-
-setwd("./output/")
-write.csv(daily_cl, "cryptos_daily_log_close.csv", row.names = TRUE)
-write.csv(weekly_cl, "cryptos_weekly_log_close.csv", row.names = TRUE)
-write.csv(monthly_cl, "cryptos_monthly_log_close.csv", row.names = TRUE)
-
-write.csv(dfc, "cryptos_daily_lr.csv", row.names = TRUE)
-write.csv(wfc, "cryptos_weekly_lr.csv", row.names = TRUE)
-write.csv(mfc, "cryptos_monthly_lr.csv", row.names = TRUE)
-setwd("./../")
-
+# Section # Hurst ###################################
+hurstexp()
 
