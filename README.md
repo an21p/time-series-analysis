@@ -17,4 +17,4 @@
 - Compute linear, non-linear and information-theoretic measures (validate using permutation tests)
 - Look at consequences of above for portfolio selection
 
-**Maintainer:** Antonis Pishias
+**Maintainer:** espen.folke@gmail.com
