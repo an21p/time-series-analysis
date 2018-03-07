@@ -12,11 +12,13 @@ setwd("./data//cryptocurrencyCSV/")
 # library(devtools)
 # install_github("cran/PerformanceAnalytics")
 # install.packages("astsa")
-# nstall.packages("pracma")
+# install.packages("pracma")
+# install.packages("corrplot")
 library(xts)
 library(astsa)
 library(PerformanceAnalytics)
 library(pracma)
+library(corrplot)
 
 files <- list.files()
 cryptos_daily_lr <- list()
@@ -178,6 +180,15 @@ d_cl_train <- ts(d_cl[1:(size-test)], frequency = 365, start = c(2015,06,26))
 str(d_cl_train)
 acf2(d_cl_train, max.lag = 60)
 
+NEM_log_returns <- cryptos_daily_lr$NEM["2015-06-26/"]
+acf2(NEM_log_returns)
+
+plot(abs(NEM_log_returns))
+acf2(abs(NEM_log_returns))
+
+plot(NEM_log_returns^2)
+acf2(NEM_log_returns^2)
+
 d1_model <- sarima(d_cl_train, 1,1,0)
 d1_model$ttable
 d1_model$AIC
@@ -218,6 +229,39 @@ m1_model$BIC
 sarima.for(m_cl_train, n.ahead=test, 1,1,0)
 lines(m_cl)
 
+# Section # Correlations ###################################
+# Daily ####################
+dfc_cor <- cor(dfc, use = "everything", method = "pearson")
+corrplot(dfc_cor, method="color", type = "upper", title="Daily Log-Return Correlation")
+
+# Weekly ####################
+wfc_cor <- cor(wfc, use = "everything", method = "pearson")
+corrplot(wfc_cor, method="color", type = "upper", title="Weekly Log-Return Correlation")
+
+# Monthly ####################
+mfc_cor <- cor(mfc, use = "everything", method = "pearson")
+corrplot(mfc_cor, method="color", type = "upper", title="Monthly Log-Return Correlation")
+
+
 # Section # Hurst ###################################
-hurstexp()
+hurstexp(daily_lr$NEM)
+hurstexp(weekly_lr$NEM)
+hurstexp(monthly_lr$NEM)
+
+# Section # Log-returns relative frequency ###################################
+d_histinfo <- hist(daily_lr$NEM, breaks=170)
+w_histinfo <- hist(weekly_lr$NEM, breaks=25)
+l_rnd <- rlaplace(100000, location=0, scale=.05)
+l_histinfo <- hist(l_rnd, breaks=20, plot=F)
+
+d_dat <- data.frame(x=d_histinfo$mids, y=d_histinfo$density)
+w_dat <- data.frame(x=w_histinfo$mids, y=w_histinfo$density)
+l_dat <- data.frame(x=l_histinfo$mids, y=l_histinfo$density)
+
+ggplot() + xlab("log-returns") + ylab("relative frequency") + #xlim(-1,1) +
+  geom_line(data=d_dat, aes(x, y), color='red') +
+  geom_line(data=w_dat, aes(x, y), color='blue') +
+  #geom_line(data=l_dat, aes(x, y), color='green') +
+  scale_y_log10()
+
 
