@@ -2,7 +2,9 @@
 # Financial Data and Statistics
 # Assignment 2
 
-# Section # Importing ###################################
+#
+# Section # Importing ##################################
+#
 
 setwd("~/Sites/rstudio/fds2")
 setwd("./data//cryptocurrencyCSV/")
@@ -14,11 +16,13 @@ setwd("./data//cryptocurrencyCSV/")
 # install.packages("astsa")
 # install.packages("pracma")
 # install.packages("corrplot")
+# install.packages("fractaldim")
 library(xts)
 library(astsa)
-library(PerformanceAnalytics)
-library(pracma)
+# library(PerformanceAnalytics)
+# library(pracma)
 library(corrplot)
+library(fractaldim)
 
 files <- list.files()
 cryptos_daily_lr <- list()
@@ -71,7 +75,9 @@ for (file in files){
 rm(file, files)
 setwd("./../")
 
-# Section # Helper Functions ###################################
+#
+# Section # Helper Functions ###########################
+#
 
 mergeAll <- function(crypto_xts_list) {
   m1 <- merge(crypto_xts_list$Bitcoin, crypto_xts_list$Dash, join = "left")
@@ -112,8 +118,11 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor)
   text(0.5, 0.5, txt, cex = cex.cor * (r+0.7))
 }
 
-# Section # Time-Horizons ###################################
-# Daily ####################
+#
+# Section # Time-Horizons ##############################
+#
+
+# Daily #
 daily_lr <- mergeAll(cryptos_daily_lr)
 periodicity(daily_lr)
 
@@ -127,7 +136,7 @@ dfcTS <- ts(dfc, frequency = 365, start = c(2015,06,26))
 plot(dfcTS, main= "Cryptocurrency Daily Log-Returns")
 
 
-# Weekly ####################
+# Weekly #
 weekly_lr <- mergeAll(cryptos_weekly_lr)
 periodicity(weekly_lr)
 
@@ -140,7 +149,7 @@ wfcTS <- ts(wfc, frequency = 52, start = c(2015,06,26))
 # Pairs
 plot(wfcTS, main= "Cryptocurrency Weekly Log-Returns")
 
-# Monthly ####################
+# Monthly #
 monthly_lr <- mergeAll(cryptos_monthly_lr)
 periodicity(monthly_lr)
 
@@ -153,7 +162,10 @@ mfcTS <- ts(mfc, frequency = 12, start = c(2015,06,26))
 # Pairs
 plot(mfcTS, main= "Cryptocurrency Monthly Log-Returns")
 
-# Section # Export ###################################
+#
+# Section # Export #####################################
+#
+
 daily_cl <- as.data.frame(log(mergeAll(cryptos_daily_close)))
 weekly_cl <- as.data.frame(log(mergeAll(cryptos_weekly_close)))
 monthly_cl <- as.data.frame(log(mergeAll(cryptos_monthly_close)))
@@ -168,7 +180,10 @@ write.csv(wfc, "cryptos_weekly_lr.csv", row.names = TRUE)
 write.csv(mfc, "cryptos_monthly_lr.csv", row.names = TRUE)
 setwd("./../")
 
-# Section # ARIMA ###################################
+#
+# Section # ARIMA ######################################
+#
+
 # This section assumes normality
 # See 'arimaplus.m' for ARIMA with t-student residuals
 
@@ -180,14 +195,14 @@ d_cl_train <- ts(d_cl[1:(size-test)], frequency = 365, start = c(2015,06,26))
 str(d_cl_train)
 acf2(d_cl_train, max.lag = 60)
 
-NEM_log_returns <- cryptos_daily_lr$NEM["2015-06-26/"]
-acf2(NEM_log_returns)
+NEM_log_returns <- daily_lr$NEM["2015-06-26/"]
+acf2(NEM_log_returns, max.lag = 60)
 
 plot(abs(NEM_log_returns))
-acf2(abs(NEM_log_returns))
+acf2(abs(NEM_log_returns), max.lag = 60)
 
 plot(NEM_log_returns^2)
-acf2(NEM_log_returns^2)
+acf2(NEM_log_returns^2, max.lag = 60)
 
 d1_model <- sarima(d_cl_train, 1,1,0)
 d1_model$ttable
@@ -229,39 +244,89 @@ m1_model$BIC
 sarima.for(m_cl_train, n.ahead=test, 1,1,0)
 lines(m_cl)
 
-# Section # Correlations ###################################
-# Daily ####################
+#
+# Section # Correlations ###############################
+#
+
+# Daily #
 dfc_cor <- cor(dfc, use = "everything", method = "pearson")
 corrplot(dfc_cor, method="color", type = "upper", title="Daily Log-Return Correlation")
 
-# Weekly ####################
+# Weekly #
 wfc_cor <- cor(wfc, use = "everything", method = "pearson")
 corrplot(wfc_cor, method="color", type = "upper", title="Weekly Log-Return Correlation")
 
-# Monthly ####################
+# Monthly #
 mfc_cor <- cor(mfc, use = "everything", method = "pearson")
 corrplot(mfc_cor, method="color", type = "upper", title="Monthly Log-Return Correlation")
 
+#
+# Section # Hurst ######################################
+#
 
-# Section # Hurst ###################################
 hurstexp(daily_lr$NEM)
 hurstexp(weekly_lr$NEM)
 hurstexp(monthly_lr$NEM)
 
-# Section # Log-returns relative frequency ###################################
+#
+# Section # Scaling # Log-returns relative frequency ###
+#
+
 d_histinfo <- hist(daily_lr$NEM, breaks=170)
 w_histinfo <- hist(weekly_lr$NEM, breaks=25)
+m_histinfo <- hist(monthly_lr$NEM, breaks=5)
 l_rnd <- rlaplace(100000, location=0, scale=.05)
 l_histinfo <- hist(l_rnd, breaks=20, plot=F)
 
 d_dat <- data.frame(x=d_histinfo$mids, y=d_histinfo$density)
 w_dat <- data.frame(x=w_histinfo$mids, y=w_histinfo$density)
+m_dat <- data.frame(x=m_histinfo$mids, y=m_histinfo$density)
 l_dat <- data.frame(x=l_histinfo$mids, y=l_histinfo$density)
 
 ggplot() + xlab("log-returns") + ylab("relative frequency") + #xlim(-1,1) +
   geom_line(data=d_dat, aes(x, y), color='red') +
   geom_line(data=w_dat, aes(x, y), color='blue') +
+  geom_line(data=m_dat, aes(x, y), color='yellow') +
   #geom_line(data=l_dat, aes(x, y), color='green') +
   scale_y_log10()
 
+#
+# Section # Fractals ###################################
+#
+# https://www.stat.washington.edu/sites/default/files/files/reports/2010/tr577.pdf
+# https://cran.r-project.org/web/packages/fractaldim/fractaldim.pdf
 
+fd_dcl <- fd.estimate(as.numeric(daily_cl$NEM),
+                  methods = list(list(name="variation", p.index=0.5),
+                                 "variogram", "hallwood", "boxcount"),
+                  window.size = length(daily_cl$NEM), plot.loglog = T, nlags = 10)
+
+fd_wcl <- fd.estimate(as.numeric(weekly_cl$NEM),
+                     methods = list(list(name="variation", p.index=0.5),
+                                    "variogram", "hallwood", "boxcount"),
+                     window.size = length(weekly_cl$NEM), plot.loglog = T, nlags = 10)
+
+fd_mcl <- fd.estimate(as.numeric(monthly_cl$NEM),
+                      methods = list(list(name="variation", p.index=0.5),
+                                     "variogram", "hallwood", "boxcount"),
+                      window.size = length(monthly_cl$NEM), plot.loglog = T, nlags = 10)
+
+
+fd_lr <- fd.estimate(as.numeric(daily_lr$NEM),
+                  methods = list(list(name="variation", p.index=0.5),
+                                 "variogram", "hallwood", "boxcount"),
+                  window.size = length(daily_cl$NEM), plot.loglog = T, nlags = 10)
+
+fd_wlr <- fd.estimate(as.numeric(weekly_lr$NEM),
+                      methods = list(list(name="variation", p.index=0.5),
+                                     "variogram", "hallwood", "boxcount"),
+                      window.size = length(weekly_cl$NEM), plot.loglog = T, nlags = 10)
+
+fd_mlr <- fd.estimate(as.numeric(monthly_lr$NEM),
+                      methods = list(list(name="variation", p.index=0.5),
+                                     "variogram", "hallwood", "boxcount"),
+                      window.size = length(monthly_lr$NEM), plot.loglog = T, nlags = 10)
+
+
+# Section # Links #########################################################
+# https://otexts.org/fpp2/index.html

@@ -40,7 +40,7 @@ EstMdlt = estimate(Mdlt,NEM_d);
 
 
 % Forcasting
-test = 200;
+test = 250;
 NEM_train = NEM_d(1:(end-test));
 y = NEM_train;
 T = length(y);
