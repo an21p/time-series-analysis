@@ -17,12 +17,16 @@ setwd("./data//cryptocurrencyCSV/")
 # install.packages("pracma")
 # install.packages("corrplot")
 # install.packages("fractaldim")
+# install.packages("forecast")
+# install.packages("fpp2")
 library(xts)
 library(astsa)
 # library(PerformanceAnalytics)
 # library(pracma)
 library(corrplot)
 library(fractaldim)
+library(forecast)
+library(fpp2)
 
 files <- list.files()
 cryptos_daily_lr <- list()
@@ -133,8 +137,7 @@ pairs(dfc,diag.panel = panel.hist, upper.panel = panel.cor)
 # Time-series Plots
 dfcTS <- ts(dfc, frequency = 365, start = c(2015,06,26))
 # Pairs
-plot(dfcTS, main= "Cryptocurrency Daily Log-Returns")
-
+autoplot(dfcTS, facets=T,main= "Cryptocurrency Daily Log-Returns") + ylab("Log-Returns") + xlab("Time")
 
 # Weekly #
 weekly_lr <- mergeAll(cryptos_weekly_lr)
@@ -147,7 +150,7 @@ pairs(wfc,diag.panel = panel.hist, upper.panel = panel.cor)
 # Time-series Plots
 wfcTS <- ts(wfc, frequency = 52, start = c(2015,06,26))
 # Pairs
-plot(wfcTS, main= "Cryptocurrency Weekly Log-Returns")
+autoplot(wfcTS, facets=T,main= "Cryptocurrency Weekly Log-Returns") + ylab("Log-Returns") + xlab("Time")
 
 # Monthly #
 monthly_lr <- mergeAll(cryptos_monthly_lr)
@@ -160,15 +163,15 @@ pairs(mfc,diag.panel = panel.hist, upper.panel = panel.cor)
 # Time-series Plots
 mfcTS <- ts(mfc, frequency = 12, start = c(2015,06,26))
 # Pairs
-plot(mfcTS, main= "Cryptocurrency Monthly Log-Returns")
+autoplot(mfcTS, facets=T,main= "Cryptocurrency Monthly Log-Returns")  + ylab("Log-Returns") + xlab("Time")
 
 #
 # Section # Export #####################################
 #
 
-daily_cl <- as.data.frame(log(mergeAll(cryptos_daily_close)))
-weekly_cl <- as.data.frame(log(mergeAll(cryptos_weekly_close)))
-monthly_cl <- as.data.frame(log(mergeAll(cryptos_monthly_close)))
+daily_cl <- as.data.frame((mergeAll(cryptos_daily_close)))
+weekly_cl <- as.data.frame((mergeAll(cryptos_weekly_close)))
+monthly_cl <- as.data.frame((mergeAll(cryptos_monthly_close)))
 
 setwd("./output/")
 write.csv(daily_cl, "cryptos_daily_log_close.csv", row.names = TRUE)
@@ -179,6 +182,23 @@ write.csv(dfc, "cryptos_daily_lr.csv", row.names = TRUE)
 write.csv(wfc, "cryptos_weekly_lr.csv", row.names = TRUE)
 write.csv(mfc, "cryptos_monthly_lr.csv", row.names = TRUE)
 setwd("./../")
+
+#
+# Section # Auto-Correlerations ########################
+#
+
+NEM_log_returns <- daily_lr$NEM["2015-06-26/"]
+acf2(NEM_log_returns, max.lag = 60)
+
+plot(abs(NEM_log_returns))
+acf2(abs(NEM_log_returns), max.lag = 60)
+
+plot(NEM_log_returns^2)
+acf2(NEM_log_returns^2, max.lag = 60)
+
+# Ljung-Box test 
+# a p-value greater than 0.05 suggests that the data are not significantly different from white noise.
+Box.test(NEM_log_returns, lag = 10, fitdf = 0, type = "Ljung")
 
 #
 # Section # ARIMA ######################################
@@ -194,15 +214,6 @@ size <- length(d_cl)
 d_cl_train <- ts(d_cl[1:(size-test)], frequency = 365, start = c(2015,06,26))
 str(d_cl_train)
 acf2(d_cl_train, max.lag = 60)
-
-NEM_log_returns <- daily_lr$NEM["2015-06-26/"]
-acf2(NEM_log_returns, max.lag = 60)
-
-plot(abs(NEM_log_returns))
-acf2(abs(NEM_log_returns), max.lag = 60)
-
-plot(NEM_log_returns^2)
-acf2(NEM_log_returns^2, max.lag = 60)
 
 d1_model <- sarima(d_cl_train, 1,1,0)
 d1_model$ttable
