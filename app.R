@@ -174,9 +174,9 @@ weekly_cl <- as.data.frame((mergeAll(cryptos_weekly_close)))
 monthly_cl <- as.data.frame((mergeAll(cryptos_monthly_close)))
 
 setwd("./output/")
-write.csv(daily_cl, "cryptos_daily_log_close.csv", row.names = TRUE)
-write.csv(weekly_cl, "cryptos_weekly_log_close.csv", row.names = TRUE)
-write.csv(monthly_cl, "cryptos_monthly_log_close.csv", row.names = TRUE)
+write.csv(daily_cl, "cryptos_daily_close.csv", row.names = TRUE)
+write.csv(weekly_cl, "cryptos_weekly_close.csv", row.names = TRUE)
+write.csv(monthly_cl, "cryptos_monthly_close.csv", row.names = TRUE)
 
 write.csv(dfc, "cryptos_daily_lr.csv", row.names = TRUE)
 write.csv(wfc, "cryptos_weekly_lr.csv", row.names = TRUE)
@@ -289,10 +289,22 @@ m_histinfo <- hist(monthly_lr$NEM, breaks=5)
 l_rnd <- rlaplace(100000, location=0, scale=.05)
 l_histinfo <- hist(l_rnd, breaks=20, plot=F)
 
-d_dat <- data.frame(x=d_histinfo$mids, y=d_histinfo$density)
-w_dat <- data.frame(x=w_histinfo$mids, y=w_histinfo$density)
-m_dat <- data.frame(x=m_histinfo$mids, y=m_histinfo$density)
-l_dat <- data.frame(x=l_histinfo$mids, y=l_histinfo$density)
+d_dat <- data.frame(x=d_histinfo$mids, y=d_histinfo$density/max(d_histinfo$density))
+w_dat <- data.frame(x=w_histinfo$mids, y=w_histinfo$density/max(w_histinfo$density))
+m_dat <- data.frame(x=m_histinfo$mids, y=m_histinfo$density/max(m_histinfo$density))
+l_dat <- data.frame(x=l_histinfo$mids, y=l_histinfo$density/max(l_histinfo$density))
+
+ggplot() + xlab("log-returns") + ylab("relative frequency") + #xlim(-1,1) +
+  geom_line(data=d_dat, aes(x, y), color='red') +
+  geom_line(data=w_dat, aes(x, y), color='blue') +
+  geom_line(data=m_dat, aes(x, y), color='yellow') +
+  #geom_line(data=l_dat, aes(x, y), color='green') +
+  scale_y_log10()
+
+# Rescaling
+d_dat <- data.frame(x=d_histinfo$mids, y=d_histinfo$density/max(d_histinfo$density))
+w_dat <- data.frame(x=w_histinfo$mids/(7^0.546), y=w_histinfo$density/max(w_histinfo$density))
+m_dat <- data.frame(x=m_histinfo$mids/(30^0.546), y=m_histinfo$density/max(m_histinfo$density))
 
 ggplot() + xlab("log-returns") + ylab("relative frequency") + #xlim(-1,1) +
   geom_line(data=d_dat, aes(x, y), color='red') +
