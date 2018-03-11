@@ -1,5 +1,7 @@
 data/finance_M4/
+hidden
 .*
 *.m~
 genhurstAdapted.m
 SimonHurstCode20180308.m
+ac_stationarity.m
