@@ -57,13 +57,11 @@ FX_mlr = fx_monthly_lr.Log_Returns;
 
 % Normal Distribution
 Mdln = arima(1,1,0);
-EstMdln = estimate(Mdln,NEM_d);
+EstMdln = estimate(Mdln,NEM_dlc);
 
 % t-student Distribution
-tdist = struct('Name','t','DoF',2.5); % DoF = 2.5 comes from part 1 of the assignment
-Mdlt = arima(1,1,0);
-Mdlt.Distribution = tdist;
-EstMdlt = estimate(Mdlt,NEM_d);
+tls = fitdist(NEM_dlr,'tlocationscale');
+tdist = struct('Name','t','DoF',tls.nu);
 
 % Forcasting
 test = 250;
@@ -112,17 +110,15 @@ hold off
 % title('Prediction Error')
 
 
-%% ARIMA FX
+%% ARIMA FX daily
 
 % Normal Distribution
 Mdln = arima(1,1,0);
-EstMdln = estimate(Mdln,FX_d);
+EstMdln = estimate(Mdln,FX_dlc);
 
 % t-student Distribution
-tdist = struct('Name','t','DoF',5.5564); % DoF = 5.5564 comes from part 1 of the assignment
-Mdlt = arima(1,1,0);
-Mdlt.Distribution = tdist;
-EstMdlt = estimate(Mdlt,FX_d);
+tls = fitdist(FX_dlr,'tlocationscale');
+tdist = struct('Name','t','DoF',tls.nu);
 
 % Forcasting
 test = 500;
@@ -141,6 +137,119 @@ figure
 plot(FX_dlc,'Color',[.75,.75,.75])
 hold on
 plot(FX_train,'Color',[0,0,.75])
+h1 = plot(T+1:T+test,yF,'r','LineWidth',2);
+h2 = plot(T+1:T+test,upper,'k--','LineWidth',1.5);
+plot(T+1:T+test,lower,'k--','LineWidth',1.5)
+xlim([0,T+test])
+title('Forecast and 95% Forecast Interval')
+legend([h1,h2],'Forecast','95% Interval','Location','NorthWest')
+hold off
+
+%% ARIMA FX weekly
+
+% Normal Distribution
+Mdln = arima(1,1,0);
+EstMdln = estimate(Mdln,FX_wlc);
+
+% t-student Distribution
+tls = fitdist(FX_wlr,'tlocationscale');
+tdist = struct('Name','t','DoF',tls.nu);
+
+
+% Forcasting
+test = 100;
+FX_train = FX_wlc(1:(end-test));
+y = FX_train;
+T = length(y);
+Mdlf = arima(1,1,0);
+Mdlf.Distribution = tdist;
+EstMdlf = estimate(Mdlf,FX_train);
+
+[yF,yMSE] = forecast(EstMdlf,test,'Y0',y);
+upper = yF + 1.96*sqrt(yMSE);
+lower = yF - 1.96*sqrt(yMSE);
+
+figure
+plot(FX_wlc,'Color',[.75,.75,.75])
+hold on
+plot(FX_train,'Color',[0,0,.75])
+h1 = plot(T+1:T+test,yF,'r','LineWidth',2);
+h2 = plot(T+1:T+test,upper,'k--','LineWidth',1.5);
+plot(T+1:T+test,lower,'k--','LineWidth',1.5)
+xlim([0,T+test])
+title('Forecast and 95% Forecast Interval')
+legend([h1,h2],'Forecast','95% Interval','Location','NorthWest')
+hold off
+
+
+%% ARIMA FX monthly
+
+% Normal Distribution
+Mdln = arima(1,1,0);
+EstMdln = estimate(Mdln,FX_mlc);
+
+% t-student Distribution
+tls = fitdist(FX_mlr,'tlocationscale');
+tdist = struct('Name','t','DoF',tls.nu);
+
+
+% Forcasting
+test = 20;
+FX_train = FX_mlc(1:(end-test));
+y = FX_train;
+T = length(y);
+Mdlf = arima(1,1,0);
+Mdlf.Distribution = tdist;
+EstMdlf = estimate(Mdlf,FX_train);
+
+[yF,yMSE] = forecast(EstMdlf,test,'Y0',y);
+upper = yF + 1.96*sqrt(yMSE);
+lower = yF - 1.96*sqrt(yMSE);
+
+figure
+plot(FX_mlc,'Color',[.75,.75,.75])
+hold on
+plot(FX_train,'Color',[0,0,.75])
+h1 = plot(T+1:T+test,yF,'r','LineWidth',2);
+h2 = plot(T+1:T+test,upper,'k--','LineWidth',1.5);
+plot(T+1:T+test,lower,'k--','LineWidth',1.5)
+xlim([0,T+test])
+title('Forecast and 95% Forecast Interval')
+legend([h1,h2],'Forecast','95% Interval','Location','NorthWest')
+hold off
+
+
+%% ARIMA FX daily ?exp()?
+
+% Normal Distribution
+Mdln = arima(1,1,0);
+EstMdln = estimate(Mdln,FX_dlc);
+
+% t-student Distribution
+tls = fitdist(FX_dlr,'tlocationscale');
+tdist = struct('Name','t','DoF',tls.nu);
+
+% Forcasting
+test = 500;
+FX_train = FX_dlc(1:(end-test));
+y = FX_train;
+T = length(y);
+Mdlf = arima(1,1,0);
+Mdlf.Distribution = tdist;
+EstMdlf = estimate(Mdlf,FX_train);
+
+[yF,yMSE] = forecast(EstMdlf,test,'Y0',y);
+
+upper = yF + 1.96*sqrt(yMSE);
+lower = yF - 1.96*sqrt(yMSE);
+yF = exp(yF);
+upper = exp(upper);
+lower = exp(lower);
+
+figure
+plot(FX_d,'Color',[.75,.75,.75])
+hold on
+plot(exp(FX_train),'Color',[0,0,.75])
 h1 = plot(T+1:T+test,yF,'r','LineWidth',2);
 h2 = plot(T+1:T+test,upper,'k--','LineWidth',1.5);
 plot(T+1:T+test,lower,'k--','LineWidth',1.5)
@@ -198,7 +307,7 @@ normdist = fitdist(NEM_dlr,'Normal');
 m = normdist.mu;
 s = normdist.sigma;
 
-obs = 10;
+obs = 11;
 len = size(neg_lr(:,1));
 extreme = neg_lr((len-obs):len);
 extreme_neg_rank = 1:length(extreme); % create rank of negative log returns
@@ -206,11 +315,10 @@ extreme_neg_ranked = 1 - (extreme_neg_rank/(length(extreme)+1));
 ratio = extreme_neg_ranked/neg_ranked((len-obs):len);
 
 f = fit(extreme,extreme_neg_ranked','b*x^(-alpha-1)', 'Start', [0 0])
+alpha_NEM = f.alpha;
 
 xp = linspace(min(extreme),max(extreme)+0.2,100);
 x = max(NEM_dlr)/1000:max(NEM_dlr)/1000:max(NEM_dlr);
-alpha_NEM = f.alpha;
-
 
 figure,
 loglog(neg_lr, neg_ranked, 'xr')
@@ -245,11 +353,10 @@ extreme_neg_ranked = 1 - (extreme_neg_rank/(length(extreme)+1));
 ratio = extreme_neg_ranked/neg_ranked((len-obs):len);
 
 f = fit(extreme,extreme_neg_ranked','b*x^(-alpha-1)', 'Start', [0 0])
+alpha_FX = f.alpha;
 
 xp = linspace(min(extreme),max(extreme)+0.2,100);
 x = max(FX_dlr)/1000:max(FX_dlr)/1000:max(FX_dlr);
-alpha_FX = f.alpha;
-
 
 figure,
 loglog(neg_lr, neg_ranked, 'xr')
@@ -267,34 +374,147 @@ set(gca,'fontsize',14)
 
 % figure
 % genhurst2(NEM_d,1:.2:3);
-% 
-% figure
-% genhurst2(NEM_w,1:.2:3);
 
 fprintf("\n\n");
 fprintf("Hurst Exponend for %s: %f\n", "NEM Daily", genhurst(NEM_d,2));
-fprintf("Hurst Exponend for %s: %f\n", "NEM Weekly", genhurst(NEM_w,2));
 
 k_tau_plot("NEM", NEM_d, 10);
+
+%% Hurst Plot on P.73
+S=NEM_d;
+q = [1:0.5:4];
+maxT=19;
+h_q = genhurst(S,q,maxT);
+qhq = h_q.*q';
+figure,
+plot(q,qhq)
+title('Hurst Exponents with Moments'); 
+xlabel('q');
+ylabel('qH(q)');
+
+%% Stylized Fact 6 
+t1=find(diff(log(NEM_d))~=0,1,'first')+1;
+t2=find(diff(log(NEM_d))~=0,1,'last');
+pr=NEM_d(t1:t2);
+syb = 'v<>^';
+col = 'rbmg';
+k=0;
+mm=[1 7 30];
+figure
+for m=mm
+     k=k+1;
+     lr = log(pr((m+1):m:end))-log(pr(1:m:(end-m)));
+     [f,b]=hist(lr,20);
+     %subplot(1,2,1)
+     semilogy(b,f/max(f),['-',syb(k),col(k)])
+     hold on
+ end
+ axis([-0.4 +0.4 1e-4 1.1])
+ legend(num2str(mm'),'Location','best')
+ set(gca,'fontsize',12)
+ xlabel('log-return','fontsize',12)
+ ylabel('relative freq','fontsize',12)
+ title('Unscaled of Monero Log Return Distribution')
+ print('1secRetDistr.eps','-depsc')
+
+%% 
+ hh=genhurst(pr,2);
+ k=0;
+ figure
+ for m=mm
+     k=k+1;
+     lr = log(pr((m+1):m:end))-log(pr(1:m:(end-m)));
+     %subplot(1,2,2)
+     [f,b]=hist(lr,20);
+     semilogy(b/m.^hh,f/max(f),['-',syb(k),col(k)])
+     hold on
+ end
+ text(0.0005,0.05,['H(2) = ',num2str(hh)],'fontsize',12)
+ axis([-0.2 +0.2 1e-4 1.1])
+ legend(num2str(mm'),'Location','best')
+ set(gca,'fontsize',12)
+ xlabel('log-return','fontsize',12)
+ ylabel('relative freq','fontsize',12)
+ title('Rescaled Monero Log Return Distribution')
+ print('1secRetDistrScaled.eps','-depsc')
+
 
 %% Hurst Exponent FX
 
 % figure
-% genhurst2(FX_d,1:.2:3);
-% 
-% figure
-% genhurst2(FX_w,1:.2:3);
+% genhurst2(FX_d,1:.2:3); 
 
 fprintf("\n\n");
 fprintf("Hurst Exponend for %s: %f\n", "NEM Daily", genhurst(FX_d,2));
-fprintf("Hurst Exponend for %s: %f\n", "NEM Weekly", genhurst(FX_w,2));
 
 k_tau_plot("FX", FX_d, 10);
 
+
+%% Hurst Plot on P.73
+S=FX_d;
+q = [1:0.5:4];
+maxT=19;
+h_q = genhurst(S,q,maxT);
+qhq = h_q.*q';
+figure,
+plot(q,qhq)
+title('Hurst Exponents with Moments'); 
+xlabel('q');
+ylabel('qH(q)');
+
+%% Stylized Fact 6 
+t1=find(diff(log(FX_d))~=0,1,'first')+1;
+t2=find(diff(log(FX_d))~=0,1,'last');
+pr=FX_d(t1:t2);
+syb = 'v<>^';
+col = 'rbmg';
+k=0;
+mm=[1 7 30];
+figure
+for m=mm
+     k=k+1;
+     lr = log(pr((m+1):m:end))-log(pr(1:m:(end-m)));
+     [f,b]=hist(lr,20);
+     %subplot(1,2,1)
+     semilogy(b,f/max(f),['-',syb(k),col(k)])
+     hold on
+ end
+ axis([-0.4 +0.4 1e-4 1.1])
+ legend(num2str(mm'),'Location','best')
+ set(gca,'fontsize',12)
+ xlabel('log-return','fontsize',12)
+ ylabel('relative freq','fontsize',12)
+ title('Unscaled of Monero Log Return Distribution')
+ print('1secRetDistr.eps','-depsc')
+
+%% 
+ hh=genhurst(pr,2);
+ k=0;
+ figure
+ for m=mm
+     k=k+1;
+     lr = log(pr((m+1):m:end))-log(pr(1:m:(end-m)));
+     %subplot(1,2,2)
+     [f,b]=hist(lr,20);
+     semilogy(b/m.^hh,f/max(f),['-',syb(k),col(k)])
+     hold on
+ end
+ text(0.0005,0.05,['H(2) = ',num2str(hh)],'fontsize',12)
+ axis([-0.2 +0.2 1e-4 1.1])
+ legend(num2str(mm'),'Location','best')
+ set(gca,'fontsize',12)
+ xlabel('log-return','fontsize',12)
+ ylabel('relative freq','fontsize',12)
+ title('Rescaled Monero Log Return Distribution')
+ print('1secRetDistrScaled.eps','-depsc')
+
+
 %% SCALING FROM ALPHA (DISTRIBUTION) Crypto % From Antonio
+% multiscaling 
 % from daily to weekly 
 freq = 7;
-hurst2 = genhurst(NEM_d,2)
+ghurst2 = genhurst(NEM_d,2)
+alpha_NEM
 hurst2 = 1/alpha_NEM
 new_lret = NEM_dlr * freq^hurst2;
 
@@ -312,18 +532,21 @@ hold on
 plot(x_values,log(y/max(y)), 'o--', 'LineWidth',2);
 plot(x_values,log(theoretical/max(theoretical)), 'x--', 'LineWidth',2)
 legend('rescaled from daily','weekly theoretical', 'location', 'best')
+xlim([-15 15])
 hold off
 KLDiv(theoretical,y)
 
+hurst2 = 1/1.75;
+ghurst1 = genhurst(NEM_d,1)
+
 % from daily to monthly 
 freq = 30;
-new_lret = NEM_dlr * freq^hurst2;
-
+new_lret = NEM_dlr * freq^ghurst1;
 
 rescaled_pd = fitdist(new_lret,'Normal');
 x_values = (-10:1:10);
 y = pdf(rescaled_pd,x_values);
-y = y*freq^hurst2;
+y = y*freq^ghurst1;
 
 pd = fitdist(NEM_mlr,'Normal');
 theoretical = pdf(pd,x_values);
@@ -331,15 +554,36 @@ theoretical = pdf(pd,x_values);
 figure
 hold on
 plot(x_values,log(y/max(y)), 'o--', 'LineWidth',2);
-plot(x_values,log(theoretical/max(theoretical)), 'x--', 'LineWidth',2)
+plot(x_values,log(theoretical/max(theoretical)), 'o--', 'LineWidth',2)
 legend('rescaled from daily','monthly theoretical', 'location', 'best')
+xlim([-15 15])
 hold off
 KLDiv(theoretical,y)
 
+%% Scaling 
+
+NEM_daily = fitdist(NEM_dlr,'Kernel');
+NEM_weekly = fitdist(NEM_wlr,'Kernel');
+NEM_monthly = fitdist(NEM_mlr,'Kernel');
+
+x_values = linspace(-2,2,1000);
+figure
+h1 = plot(x_values, pdf(NEM_daily,x_values),'LineWidth',1.5);
+hold on
+h2 = plot(x_values, pdf(NEM_weekly,x_values),'LineWidth',1.5);
+h3 = plot(x_values, pdf(NEM_monthly,x_values),'LineWidth',1.5);
+
+ylabel('Probability Density')
+xlabel('Log-Returns')
+title(['NEM',' ','Log-Return Distribution'])
+legend([h1,h2,h3],'Daily','Weekly','Monthly','Location','best')
+
 %% SCALING FROM ALPHA (DISTRIBUTION) FX % From Antonio
+% uniscaling 
 % from daily to weekly 
 freq = 7;
-hurst2 = genhurst(FX_d,2)
+ghurst2 = genhurst(FX_d,2)
+alpha_FX
 hurst2 = 1/alpha_FX
 new_lret = FX_dlr * freq^hurst2;
 
@@ -357,6 +601,7 @@ hold on
 plot(x_values,log(y/max(y)), 'o--', 'LineWidth',2);
 plot(x_values,log(theoretical/max(theoretical)), 'x--', 'LineWidth',2)
 legend('rescaled from daily','weekly theoretical', 'location', 'best')
+xlim([-1 1])
 hold off
 KLDiv(theoretical,y)
 
@@ -377,5 +622,24 @@ hold on
 plot(x_values,log(y/max(y)), 'o--', 'LineWidth',2);
 plot(x_values,log(theoretical/max(theoretical)), 'o--', 'LineWidth',2)
 legend('rescaled from daily','monthly theoretical', 'location', 'best')
+xlim([-1 1])
 hold off
 KLDiv(theoretical,y)
+
+%% Scaling 
+
+FX_daily = fitdist(FX_dlr,'Kernel');
+FX_weekly = fitdist(FX_wlr,'Kernel');
+FX_monthly = fitdist(FX_mlr,'Kernel');
+
+x_values = linspace(-.5,.5,1000);
+figure
+h1 = plot(x_values, pdf(FX_daily,x_values),'LineWidth',1.5);
+hold on
+h2 = plot(x_values, pdf(FX_weekly,x_values),'LineWidth',1.5);
+h3 = plot(x_values, pdf(FX_monthly,x_values),'LineWidth',1.5);
+xlim([-.2 .2])
+ylabel('Probability Density')
+xlabel('Log-Returns')
+title(['FX',' ','Log-Return Distribution'])
+legend([h1,h2,h3],'Daily','Weekly','Monthly','Location','best')

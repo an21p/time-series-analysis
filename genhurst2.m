@@ -1,6 +1,33 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Calculates the generalized Hurst exponent H(q) from the scaling
-% of the renormalized q-moments of the distribution
+%
+% Copyright (c) 2011, Tomaso Aste
+% All rights reserved.
+% 
+% Redistribution and use in source and binary forms, with or without
+% modification, are permitted provided that the following conditions are
+% met:
+% 
+%     * Redistributions of source code must retain the above copyright
+%       notice, this list of conditions and the following disclaimer.
+%     * Redistributions in binary form must reproduce the above copyright
+%       notice, this list of conditions and the following disclaimer in
+%       the documentation and/or other materials provided with the distribution
+% 
+% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+% AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+% IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+% ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+% LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+% CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+% SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+% INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+% POSSIBILITY OF SUCH DAMAGE.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Calculates the generalized Hurst exponent H(q) from the scaling 
+% of the renormalized q-moments of the distribution 
 %
 %       <|x(t+r)-x(t)|^q>/<x(t)^q> ~ r^[qH(q)]
 %
@@ -21,13 +48,13 @@
 % example:
 %   generalized Hurst exponent for a random gaussian process
 %   H=genhurst(cumsum(randn(10000,1)))
-% or
+% or 
 %   H=genhurst(cumsum(randn(10000,1)),q) to calculate H(q) with arbitrary q
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for the generalized Hurst exponent method please refer to:
 %
-%   T. Di Matteo et al. Physica A 324 (2003) 183-188
+%   T. Di Matteo et al. Physica A 324 (2003) 183-188 
 %   T. Di Matteo et al. Journal of Banking & Finance 29 (2005) 827-851
 %   T. Di Matteo Quantitative Finance, 7 (2007) 21-36
 %
@@ -35,7 +62,7 @@
 %%    Tomaso Aste   30/01/2013     %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [mH,sH]=genhurst2(S,q,maxT)
+function [mH,sH]=genhurst(S,q,maxT) 
 if nargin < 2, q = 1; maxT = 19; end
 if nargin < 3,  maxT = 19; end
 if size(S,1)==1 & size(S,2)>1
@@ -69,16 +96,16 @@ for Tmax=5:maxT
         cc(2) = my - cc(1)*mx;
         ddVd  = dV - cc(1);
         VVVd  = VV - cc(1).*(1:N) - cc(2);
-         % figure
-         % plot(X,Y,'o')
-         % hold on
-         % plot(X,cc(1)*X+cc(2),'-r')
-         % figure
-         % plot(1:N-1,dV,'ob')
-         % hold on
-         % plot([1 N-1],mean(dV)*[1 1],'-b')
-         % plot(1:N-1,ddVd,'xr')
-         % plot([1 N-1],mean(ddVd)*[1 1],'-r')
+         %figure
+         %plot(X,Y,'o')
+         %hold on
+         %plot(X,cc(1)*X+cc(2),'-r')
+         %figure
+         %plot(1:N-1,dV,'ob')
+         %hold on
+         %plot([1 N-1],mean(dV)*[1 1],'-b')
+         %plot(1:N-1,ddVd,'xr')
+         %plot([1 N-1],mean(ddVd)*[1 1],'-r')
         for qq=1:lq
             mcord(tt,qq)=mean(abs(ddVd).^q(qq))/mean(abs(VVVd).^q(qq));
         end
@@ -91,8 +118,9 @@ for Tmax=5:maxT
         H(k,qq) = SSxy/SSxx;
     end
 end
-% figure
+%figure
 loglog(x,mcord,'x-')
+hold on
 mH = mean(H)'./q(:);
 if nargout == 2
     sH = std(H)'./q(:);
