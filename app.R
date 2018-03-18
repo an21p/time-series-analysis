@@ -131,10 +131,11 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor)
 #
 
 ## FX
-obs <- length(fx_daily_close)
+obs <- length(fx_daily_close$Close)
 dates <- seq(as.Date("2000-01-01"), length=obs, by="days")
-fx_d <- xts(x=fx_daily_close, order.by=dates, frequency = 365)
+fx_d <- xts(x=fx_daily_close$Close, order.by=dates, frequency = 365)
 fx_d <- as.xts(fx_d)
+colnames(fx_d) <- c("Close")
 periodicity(fx_d)
 fx_dlc <- log(fx_d)
 colnames(fx_dlr) <- c("Log-Prices")
@@ -151,14 +152,13 @@ colnames(fx_wlr) <- c("Log-Returns")
 fx_m <- to.monthly(fx_d, OHLC=F)
 periodicity(fx_m)
 fx_mlc <- log(fx_m)
-colnames(fx_mlr) <- c("Log-Prices")
+colnames(fx_mlc) <- c("Log-Prices")
 fx_mlr <- na.omit(diff(fx_mlc))
 colnames(fx_mlr) <- c("Log-Returns")
 
 ## Crypto
 
 # Daily #
-to.monthly(fx_d_zoo)
 daily_lr <- mergeAll(cryptos_daily_lr)
 periodicity(daily_lr)
 
@@ -202,6 +202,7 @@ autoplot(mfcTS, facets=T,main= "Cryptocurrency Monthly Log-Returns")  + ylab("Lo
 #
 
 setwd("./output/")
+write.csv(as.data.frame(daily_lr), 'all_crypto_log_returns.csv', row.names = T)
 
 ## FX
 
@@ -232,6 +233,11 @@ setwd("./../")
 # Section # Auto-Correlerations ########################
 #
 
+NEM_daily_close <- cryptos_daily_close$NEM["2015-06-26/"] 
+NEM_daily_close %>% autoplot()
+lamdba =NEM_daily_close %>% BoxCox.lambda()
+NEM_daily_close %>% BoxCox(lambda = 0) %>% autoplot()
+
 NEM_log_returns <- daily_lr$NEM["2015-06-26/"]
 acf2(NEM_log_returns, max.lag = 60)
 
@@ -260,7 +266,8 @@ fx_d_cl <- ts(fx_dlc, frequency = 365, start = c(2001,01,01))
 size <- length(fx_d_cl)
 fx_d_cl_train <- ts(fx_d_cl[1:(size-test)], frequency = 365, start = c(2001,01,01))
 str(fx_d_cl_train)
-acf2(fx_d_cl_train, max.lag = 60)
+acf2(fx_d_cl_train, max.lag = 60, main="Equity/FX Daily Log-Prices (60 lags)")
+acf2(diff(fx_d_cl_train), max.lag = 60, main="Equity/FX Daily Log-Returns (60 lags)")
 
 d1_model <- sarima(fx_d_cl_train, 1,1,0)
 d1_model$ttable
@@ -276,7 +283,8 @@ fx_w_cl <- ts(fx_wlc, frequency = 52, start = c(2001,01,01))
 size <- length(fx_w_cl)
 fx_w_cl_train <- ts(fx_w_cl[1:(size-test)], frequency = 52, start = c(2001,01,01))
 str(fx_w_cl_train)
-acf2(fx_w_cl_train, max.lag = 60)
+acf2(fx_w_cl_train, max.lag = 60, main="Equity/FX Weekly Log-Prices (60 lags)")
+acf2(diff(fx_w_cl_train), max.lag = 60, main="Equity/FX Weekly Log-Returns (60 lags)")
 
 d1_model <- sarima(fx_w_cl_train, 1,1,0)
 d1_model$ttable
@@ -292,7 +300,8 @@ fx_m_cl <- ts(fx_mlc, frequency = 12, start = c(2001,01,01))
 size <- length(fx_m_cl)
 fx_m_cl_train <- ts(fx_m_cl[1:(size-test)], frequency = 12, start = c(2001,01,01))
 str(fx_m_cl_train)
-acf2(fx_m_cl_train, max.lag = 60)
+acf2(fx_m_cl_train, max.lag = 60, main="Equity/FX Monthly Log-Prices (60 lags)")
+acf2(diff(fx_m_cl_train), max.lag = 60, main="Equity/FX Monthly Log-Returns (60 lags)")
 
 d1_model <- sarima(fx_m_cl_train, 1,1,0)
 d1_model$ttable
@@ -309,9 +318,10 @@ d_cl <- ts(log(cryptos_daily_close$NEM["2015-06-26/"]), frequency = 365, start =
 size <- length(d_cl)
 d_cl_train <- ts(d_cl[1:(size-test)], frequency = 365, start = c(2015,06,26))
 str(d_cl_train)
-acf2(d_cl_train, max.lag = 60)
+acf2(d_cl_train, max.lag = 60, main="NEM Daily Log-Prices (60 lags)")
+acf2(diff(d_cl_train), max.lag = 60, main="Daily Weekly Log-Returns (60 lags)")
 
-d1_model <- sarima(d_cl_train, 1,1,0)
+d1_model <- sarima(d_cl_train, 2,1,0)
 d1_model$ttable
 d1_model$AIC
 d1_model$BIC
@@ -325,9 +335,10 @@ w_cl <- ts(log(cryptos_weekly_close$NEM["2015-06-26/"]), frequency = 52, start =
 size <- length(w_cl)
 w_cl_train <- ts(w_cl[1:(size-test)], frequency = 52, start = c(2015,06,26))
 str(w_cl_train)
-acf2(w_cl_train, max.lag = 60)
+acf2(w_cl_train, max.lag = 60, main="NEM Weekly Log-Prices (60 lags)")
+acf2(diff(w_cl_train), max.lag = 60, main="NEM Weekly Log-Returns (60 lags)")
 
-w1_model <- sarima(w_cl_train, 1,1,0)
+w1_model <- sarima(w_cl_train, 2,1,0)
 w1_model$ttable
 w1_model$AIC
 w1_model$BIC
@@ -341,7 +352,8 @@ m_cl <- ts(log(cryptos_monthly_close$NEM["2015-06-26/"]), frequency = 12, start 
 size <- length(m_cl)
 m_cl_train <- ts(m_cl[1:(size-test)], frequency = 12, start = c(2015,06,26))
 str(m_cl_train)
-acf2(m_cl_train)
+acf2(m_cl_train, main="NEM Monthly Log-Prices")
+acf2(diff(m_cl_train), main="NEM Monthly Log-Returns")
 
 m1_model <- sarima(m_cl_train, 1,1,0)
 m1_model$ttable
@@ -351,14 +363,20 @@ m1_model$BIC
 sarima.for(m_cl_train, n.ahead=test, 1,1,0)
 lines(m_cl)
 
+
 #
-# Section # ETS ###############################
+# Section # Error Trend Seasonality ####################
 #
 
-nem_mlc_all <- ts(log(cryptos_monthly_close$NEM["2015-06-26/"]), frequency = 12, start = c(2015,06,26))
-fit.nem_mlc_all <- ets(nem_mlc_all)
-checkresiduals(fit.nem_mlc_all)
-autoplot(forecast(fit.nem_mlc_all))
+# FX Monthly 
+fit.fx_m_cl <- ets(fx_m_cl)
+checkresiduals(fit.fx_m_cl)
+autoplot(forecast(fit.fx_m_cl))
+
+# NEM Monthly 
+fit.m_cl <- ets(m_cl)
+checkresiduals(fit.m_cl)
+autoplot(forecast(fit.m_cl))
 #
 # Section # Correlations ###############################
 #
@@ -551,3 +569,33 @@ fd_mlr <- fd.estimate(as.numeric(monthly_lr$NEM),
 #   scale_y_log10()
 # Section # Links #########################################################
 # https://otexts.org/fpp2/index.html
+
+# Moar
+NEM_daily_close <- cryptos_daily_close$NEM["2015-06-26/"] 
+NEM_daily_close %>% autoplot()
+lamdba =NEM_daily_close %>% BoxCox.lambda()
+NEM_daily_close %>% BoxCox(lambda = 0) %>% autoplot()
+
+NEM_log_returns <- daily_lr$NEM["2015-06-26/"]
+acf2(NEM_log_returns, max.lag = 60)
+
+fit <- auto.arima(log(NEM_daily_close))
+
+summary(fit)
+
+farima <- function(x, h) {
+  forecast(auto.arima(x, lambda = 0), h=h)
+}
+
+library(rugarch)
+nem_daily_all <- ts(log(cryptos_daily_close$NEM["2015-06-26/"]), frequency = 365, start = c(2015,06,26))
+
+adf.test(diff(log(nem_daily_all)), alternative="stationary", k=0)
+
+
+train <- window(nem_daily_all, start = c(2015,6), end = c(2017,153))
+fit1 <- autoarfima(train, ar.max = 2, ma.max = 2, method = "full", criterion = c("AIC","BIC"), distribution.model = "std")
+fc1 <- arfimaforecast(fit1, n.ahead = 50)
+
+accuracy(fc1, nem_daily_all)
+
