@@ -571,31 +571,31 @@ fd_mlr <- fd.estimate(as.numeric(monthly_lr$NEM),
 # https://otexts.org/fpp2/index.html
 
 # Moar
-NEM_daily_close <- cryptos_daily_close$NEM["2015-06-26/"] 
-NEM_daily_close %>% autoplot()
-lamdba =NEM_daily_close %>% BoxCox.lambda()
-NEM_daily_close %>% BoxCox(lambda = 0) %>% autoplot()
-
-NEM_log_returns <- daily_lr$NEM["2015-06-26/"]
-acf2(NEM_log_returns, max.lag = 60)
-
-fit <- auto.arima(log(NEM_daily_close))
-
-summary(fit)
-
-farima <- function(x, h) {
-  forecast(auto.arima(x, lambda = 0), h=h)
-}
-
-library(rugarch)
-nem_daily_all <- ts(log(cryptos_daily_close$NEM["2015-06-26/"]), frequency = 365, start = c(2015,06,26))
-
-adf.test(diff(log(nem_daily_all)), alternative="stationary", k=0)
-
-
-train <- window(nem_daily_all, start = c(2015,6), end = c(2017,153))
-fit1 <- autoarfima(train, ar.max = 2, ma.max = 2, method = "full", criterion = c("AIC","BIC"), distribution.model = "std")
-fc1 <- arfimaforecast(fit1, n.ahead = 50)
-
-accuracy(fc1, nem_daily_all)
+# NEM_daily_close <- cryptos_daily_close$NEM["2015-06-26/"] 
+# NEM_daily_close %>% autoplot()
+# lamdba =NEM_daily_close %>% BoxCox.lambda()
+# NEM_daily_close %>% BoxCox(lambda = 0) %>% autoplot()
+# 
+# NEM_log_returns <- daily_lr$NEM["2015-06-26/"]
+# acf2(NEM_log_returns, max.lag = 60)
+# 
+# fit <- auto.arima(log(NEM_daily_close))
+# 
+# summary(fit)
+# 
+# farima <- function(x, h) {
+#   forecast(auto.arima(x, lambda = 0), h=h)
+# }
+# 
+# library(rugarch)
+# nem_daily_all <- ts(log(cryptos_daily_close$NEM["2015-06-26/"]), frequency = 365, start = c(2015,06,26))
+# 
+# adf.test(diff(log(nem_daily_all)), alternative="stationary", k=0)
+# 
+# 
+# train <- window(nem_daily_all, start = c(2015,6), end = c(2017,153))
+# fit1 <- autoarfima(train, ar.max = 2, ma.max = 2, method = "full", criterion = c("AIC","BIC"), distribution.model = "std")
+# fc1 <- arfimaforecast(fit1, n.ahead = 50)
+# 
+# accuracy(fc1, nem_daily_all)
 

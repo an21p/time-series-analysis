@@ -690,7 +690,8 @@ legend([h1,h2,h3],'Daily','Weekly','Monthly','Location','best')
 
 
 %% Correlations
-
+clear all
+close all
 
 cryptos = {'Bitcoin', 'Dash', 'Ethereum', 'Litecoin', 'Monero', 'NEM', 'Ripple', 'Siacoin', 'Stellar', 'Verge'};
 
@@ -701,19 +702,123 @@ PR = false;
 KR = false;
 SR = false;
 
-%%
-
 % Pearson
 title = "Pearson's Correlation Coefficients for 10 Cryptocurrencies (Daily Returns)";
 if PR == false, [PR,~] = corr(all_crypto); end
 colorcorr(title,PR,cryptos)
 
-% Pearson
+% Kendall
 title = "Kendall's Rank Correlation Coefficients (\tau) for 10 Cryptocurrencies (Daily Returns)";
 if KR == false, [KR,~] = corr(all_crypto,'type','Kendall'); end
 colorcorr(title,KR,cryptos)
 
-% Pearson
+% Spearman
 title = "Spearman?s Rank Correlation Coefficients (\rho) for 10 Cryptocurrencies (Daily Returns)";
 if SR == false, [SR,~] = corr(all_crypto,'type','Spearman'); end
 colorcorr(title,SR,cryptos)
+
+
+%% PCA
+
+[coeff,score,latent,tsquared,explained] = pca(zscore(all_crypto));
+explained
+cumsum(explained)
+
+% figure
+% scatter3(score(:,1),score(:,2),score(:,3))
+% axis equal
+% xlabel('1st Principal Component')
+% ylabel('2nd Principal Component')
+% zlabel('3rd Principal Component')
+
+figure
+subplot(1,2,1)
+plot(explained, 'o--')
+xlabel("Principal Component")
+ylabel("Proportion of Variance Explained")
+
+subplot(1,2,2)
+plot(cumsum(explained), 'o--')
+xlabel("Principal Component")
+ylabel("Cumulative Proportion of Variance Explained")
+ylim([0 100])
+
+figure
+biplot(coeff(:,[2 3]),'scores',score(:,[2 3]),'varlabels',cryptos);
+
+% explained =
+%    30.4380
+%    12.1630
+%     9.6110
+%     8.8008
+%     8.5273
+%     7.5565
+%     6.9467
+%     6.4336
+%     4.8366
+%     4.6865
+
+%% Hierarchical Clustering
+
+[PR,~] = corr(zscore(all_crypto));
+RPR = 1-PR;
+E = pdist(RPR,'euclidean');
+Y = squareform(E);
+%Y = sqrt(2*(1-PR));
+
+Z = linkage(Y,'complete','euclidean');
+
+figure
+dendrogram(Z,'ColorThreshold','default', 'Orientation', 'left' )
+ind = str2num(get(gca,'YTickLabel'));
+set(gca, 'YTickLabel',cryptos(ind))
+ax = gca;
+ax.Title.String = 'Hierarchical Clustering of Cryptocurrencies';
+xtickangle(gca, 90)
+
+c = cluster(Z,'maxclust',5);
+figure
+scatter3(Y(:,1),Y(:,2),Y(:,3),10,c, 'LineWidth', 5)
+figure
+scatter(Y(:,1),Y(:,2),10,c, 'LineWidth', 5)
+
+
+
+%% MI
+
+% Bitcoin = all_crypto_table.Bitcoin;
+% Stellar = all_crypto_table.Stellar;
+% Litecoin = all_crypto_table.Litecoin;
+% Siacon = all_crypto_table.Siacon;
+% NEM = all_crypto_table.NEM;
+% 
+% Ripple = all_crypto_table.Ripple;
+% 
+% 
+% mi(Bitcoin,NEM)  % 0.0225
+% mi(Stellar,NEM)  % 0.0339
+% mi(Litecoin,NEM) % 0.0122
+% mi(Siacon,NEM)   % 0.0392
+% 
+% mi(Litecoin, Bitcoin) % 0.1904
+% mi(Ripple, Stellar) % 0.0726
+
+%[F, cv] = granger_cause(Bitcoin, NEM, 0.05, 50)
+
+%% Permutation Test
+
+pvals = zeros(length(all_crypto(1,:)));
+perms = 5000;
+
+for i = 1:length(all_crypto(1,:))
+    for j = 1:length(all_crypto(1,:))
+        display(sprintf('i = %d, j = %d', i,j))
+        pvals(i,j)=permtest(all_crypto(:,i), all_crypto(:,j), perms);
+    end
+end
+
+%%
+
+colorcorr("P values for Spearman Correlations from Permutation Test", pvals, cryptos, flipud(summer), 0,1)
+
+%% Eigenvectors
